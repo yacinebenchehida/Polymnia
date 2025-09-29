@@ -209,13 +209,16 @@ plot_genotype_phenotype <- function(top_snps, pheno_file, vcf_file, path_results
 ###############################
 # Function: Run Augustus + BLAST
 ###############################
-run_augustus_blast <- function(top_snps, fasta_ref_path, blast_script_path, output_path, window_size = 300000) {
+###############################
+# Function: Run Augustus + BLAST
+###############################
+run_augustus_blast <- function(top_snps, blast_script_path, output_path, db_path, window_size = 300000) {
   
   for (i in 1:nrow(top_snps)) {
     snp <- top_snps[i, ]
     message("Processing SNP: ", snp$SNP, " on ", snp$CHR)
     
-    # Get the chromosome length for edge handling
+    # Get chromosome data to determine boundaries
     chr_data <- gwas %>% filter(CHR == snp$CHR)
     max_bp <- max(chr_data$BP)
     
@@ -231,19 +234,22 @@ run_augustus_blast <- function(top_snps, fasta_ref_path, blast_script_path, outp
       end_bp <- snp$BP + window_size
     }
     
-    # Build output folder name
+    # Build result directory name for this SNP
     region_name <- paste0(snp$CHR, "_", start_bp, "_", end_bp)
+    snp_output_dir <- file.path(output_path, region_name)
+    dir.create(snp_output_dir, recursive = TRUE, showWarnings = FALSE)
     
     # Run the bash script
     cmd <- paste(
       "bash", blast_script_path,
-      snp$CHR, start_bp, end_bp
+      snp$CHR, start_bp, end_bp, snp_output_dir, db_path
     )
     
     message("Running command: ", cmd)
     system(cmd)
   }
 }
+
 
 ###################
 # Run functions
@@ -255,8 +261,8 @@ plot_genotype_phenotype(top_snps, pheno_file, vcf_file, path_results)
 # Make a quick and dirty annotation of the area around the top pick and then blast it against the suiss prot database for insect
 run_augustus_blast(
   top_snps = top_snps,
-  fasta_ref_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Data/Gene_color_genes",
   blast_script_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Scripts/blast_uniprot.sh",
-  output_path = path_results,
-  window_size = 300000  # 300 kb
+  output_path = path_results,  
+  db_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Databases/database_insect",
+  window_size = 300000
 )

@@ -206,8 +206,57 @@ plot_genotype_phenotype <- function(top_snps, pheno_file, vcf_file, path_results
   dev.off()
 }
 
+###############################
+# Function: Run Augustus + BLAST
+###############################
+run_augustus_blast <- function(top_snps, fasta_ref_path, blast_script_path, output_path, window_size = 300000) {
+  
+  for (i in 1:nrow(top_snps)) {
+    snp <- top_snps[i, ]
+    message("Processing SNP: ", snp$SNP, " on ", snp$CHR)
+    
+    # Get the chromosome length for edge handling
+    chr_data <- gwas %>% filter(CHR == snp$CHR)
+    max_bp <- max(chr_data$BP)
+    
+    # Define ±window_size window
+    if (snp$BP < window_size) {
+      start_bp <- 0
+      end_bp <- min(2 * window_size, max_bp)
+    } else if (snp$BP > (max_bp - window_size)) {
+      start_bp <- max(0, max_bp - 2 * window_size)
+      end_bp <- max_bp
+    } else {
+      start_bp <- snp$BP - window_size
+      end_bp <- snp$BP + window_size
+    }
+    
+    # Build output folder name
+    region_name <- paste0(snp$CHR, "_", start_bp, "_", end_bp)
+    
+    # Run the bash script
+    cmd <- paste(
+      "bash", blast_script_path,
+      snp$CHR, start_bp, end_bp
+    )
+    
+    message("Running command: ", cmd)
+    system(cmd)
+  }
+}
+
 ###################
 # Run functions
 ###################
+# Define top SNPs and make gwas zoom
 top_snps <- plot_top_snps_zoom(gwas, bonf_threshold, zoom_kb = 100, path_results)
+# Plot for top snps the relation between phenotype and genotype
 plot_genotype_phenotype(top_snps, pheno_file, vcf_file, path_results)
+# Make a quick and dirty annotation of the area around the top pick and then blast it against the suiss prot database for insect
+run_augustus_blast(
+  top_snps = top_snps,
+  fasta_ref_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Data/Gene_color_genes",
+  blast_script_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Scripts/blast_uniprot.sh",
+  output_path = path_results,
+  window_size = 300000  # 300 kb
+)

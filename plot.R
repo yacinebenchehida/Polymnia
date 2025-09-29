@@ -263,6 +263,6 @@ run_augustus_blast(
   top_snps = top_snps,
   blast_script_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Scripts/blast_uniprot.sh",
   output_path = path_results,  
-  db_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Databases/database_insect",
+  db_path = "/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Data/Blast/database_insect",
   window_size = 300000
 )

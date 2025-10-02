@@ -14,13 +14,11 @@ module load BCFtools/1.19-GCC-13.2.0
 ####################
 # Set useful paths #
 ####################
-CHEMIN="/mnt/scratch/projects/biol-specgen-2018/yacine/Conv_Evol/GWAS/Chetone/Scripts"
-RESULTS="/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Results/$1/$2"
+RESULTS="/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Results/female_only/$1/$2"
 PLINK="/mnt/scratch/projects/biol-specgen-2018/yacine/Tools/plink_linux_x86_64_20231018/plink"
 GEMMA="/mnt/scratch/projects/biol-specgen-2018/yacine/Tools/gemma/gemma-0.98.5-linux-static-AMD64"
-VCF="/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Data/polymnia.filtered_chr_maf10.snps.vcf.gz"
+VCF="/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Data/females_polymnia.filtered_chr_maf5.snps.vcf.gz"
 PHENOTYPES="${RESULTS}/GEMMA_encoding_phenotype_${2}.txt"
-PLOT_SCRIPT="/mnt/scratch/projects/biol-specgen-2018/yacine/Conv_Evol/GWAS/Scripts/Plot.R"
 CSV="/mnt/scratch/projects/biol-specgen-2018/yacine/Polymnia/Data/$3"
 PC="$4"
 
@@ -51,7 +49,7 @@ bcftools index -s $VCF|awk '{print $1"\t"$2}'|sort -V -rk 2 > $RESULTS/scaffold_
 THRESHOLD=$(cat $RESULTS/*assoc.gemma.log.txt|grep "analyzed SNPs/var" |awk '{print $7}')
 
 # Make a png plot of the gwas (low quality)
-Rscript $PLOT_SCRIPT $RESULTS/"$2".assoc.gemma.assoc.txt $RESULTS/scaffold_order_$2.txt $THRESHOLD $RESULTS
+Rscript ./Plot.R $RESULTS/"$2".assoc.gemma.assoc.txt $RESULTS/scaffold_order_$2.txt $THRESHOLD $RESULTS $PHENOTYPES $VCF
 mv $RESULTS/GWAS.png  $RESULTS/GWAS_"$2".png
 
 # sbatch ./master_script.sh bF bF_S1_PC1 PCs_bF_S1.csv 3

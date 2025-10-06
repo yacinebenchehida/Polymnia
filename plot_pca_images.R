@@ -106,12 +106,13 @@ plot_pca_images <- function(pca_file,
 
 
 plot_pca_images(
-  pca_file="/Users/yacinebenchehida/Desktop/Convergent_evolution/Polymnia/PCA\ data/PCs_yH_S1.csv",
-  image_dir="/Users/yacinebenchehida/Desktop/Convergent_evolution/Polymnia/photo/ventral_hindwing_cartoons_resized/",
+  pca_file="/Users/yacinebenchehida/Desktop/Convergent_evolution/Polymnia/PCA\ data/PCs_yF_S1.csv",
+  image_dir="/Users/yacinebenchehida/Desktop/Convergent_evolution/Polymnia/photo/dorsal_forewing_cartoons_resized//",
   x_pc = "PC1",
   y_pc = "PC2",
   remove_bg = TRUE,    # enable background removal
   bg_color = "white",  # color to remove
-  fuzz = 12,           # 
-  output_pdf = "pca_plot_transparent.pdf"
+  fuzz = 12,           
+  output_pdf = "/Users/yacinebenchehida/Desktop/Convergent_evolution/Polymnia/photo/forewing_yellow.pdf"
 )
+

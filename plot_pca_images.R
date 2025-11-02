@@ -6,6 +6,7 @@ plot_pca_images <- function(
     subset_samples = NULL,
     output_pdf = "pca_plot.pdf",
     single_PC = FALSE,
+    subsetting = FALSE,
     remove_bg = TRUE,
     bg_color = "white",
     fuzz = 10,
@@ -73,8 +74,13 @@ plot_pca_images <- function(
     }
   }
   
-  reordered_data <- data[order(data$PC1), ]
+  reordered_data <- data[order(data[[x_pc]]), ]
   reordered_data$order <- seq_len(nrow(reordered_data))
+  
+  if(subsetting==TRUE){
+    reordered_data <- reordered_data[seq(1, nrow(reordered_data), by = 4), ]
+  }
+  
   
   
   # --- Plot using cairo_pdf for proper transparency ---
@@ -86,7 +92,7 @@ plot_pca_images <- function(
   }
   size = 1.8 / nrow(reordered_data)
   p_one_pc <- ggplot(reordered_data, aes(x = order, y = order, image = url)) +
-    theme_bw() +
+    theme_bw() + ylab(paste(x_pc)) +
     geom_image(size = size, by = "width", na.rm = TRUE)
   print(p_one_pc)
   
@@ -113,4 +119,4 @@ plot_pca_images <- function(
   invisible(data)
 }
 
- # Usage example: plot_pca_images(pca_file = "PCA data/PCs_bF_S1.csv", image_dir="photo/dorsal_forewing_cartoons_resized/", x_pc = "PC2", y_pc = "PC3", subset_samples = NULL, output_pdf = "appenage.pdf", remove_bg = TRUE, bg_color = "white", fuzz = 10, trim = TRUE, single_PC=TRUE)
+ # Usage example:   plot_pca_images(pca_file = "PCA data/PCs_yH_S1.csv", image_dir="photo/ventral_hindwing_cartoons_resized/", x_pc = "PC1", y_pc = "PC2", subset_samples = NULL, output_pdf = "/Users/yacinebenchehida/Desktop/Convergent_evolution/Polymnia/Results/No_Pop_structure/yH/yH_S1_PC1/yH_S1_PC1_single.pdf", remove_bg = TRUE, bg_color = "white", fuzz = 10, trim = TRUE, single_PC=TRUE, subsetting=TRUE)

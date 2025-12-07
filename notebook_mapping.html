@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Yacine Ben Chehida">
+
+<title>Mapping Porpoise Illumina Genomic Data</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="notebook_mapping_files/libs/clipboard/clipboard.min.js"></script>
+<script src="notebook_mapping_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="notebook_mapping_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="notebook_mapping_files/libs/quarto-html/popper.min.js"></script>
+<script src="notebook_mapping_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="notebook_mapping_files/libs/quarto-html/anchor.min.js"></script>
+<link href="notebook_mapping_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="notebook_mapping_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="notebook_mapping_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="notebook_mapping_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="notebook_mapping_files/libs/bootstrap/bootstrap-8a894fcc3cb5e37eb5bf30def131be2f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<style>html{ scroll-behavior: smooth; }</style>
+<link href="notebook_mapping_files/libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="notebook_mapping_files/libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#visualize-raw-sampling" id="toc-visualize-raw-sampling" class="nav-link" data-scroll-target="#visualize-raw-sampling"><span class="header-section-number">2</span> Visualize raw sampling</a></li>
+  <li><a href="#number-of-samples-per-population" id="toc-number-of-samples-per-population" class="nav-link" data-scroll-target="#number-of-samples-per-population"><span class="header-section-number">3</span> Number of samples per population</a></li>
+  <li><a href="#running-qualimap-on-mapped-bam-files" id="toc-running-qualimap-on-mapped-bam-files" class="nav-link" data-scroll-target="#running-qualimap-on-mapped-bam-files"><span class="header-section-number">4</span> Running Qualimap on mapped BAM files</a></li>
+  <li><a href="#extracting-useful-qualimap-qc-metrics" id="toc-extracting-useful-qualimap-qc-metrics" class="nav-link" data-scroll-target="#extracting-useful-qualimap-qc-metrics"><span class="header-section-number">5</span> <strong>Extracting useful Qualimap QC Metrics</strong></a></li>
+  <li><a href="#visualising-mapping-statistics-for-each-sample" id="toc-visualising-mapping-statistics-for-each-sample" class="nav-link" data-scroll-target="#visualising-mapping-statistics-for-each-sample"><span class="header-section-number">6</span> Visualising Mapping Statistics for Each Sample</a></li>
+  <li><a href="#mapping-statistics-across-subspecies" id="toc-mapping-statistics-across-subspecies" class="nav-link" data-scroll-target="#mapping-statistics-across-subspecies"><span class="header-section-number">7</span> <strong>Mapping statistics across subspecies</strong></a>
+  <ul class="collapse">
+  <li><a href="#boxplots" id="toc-boxplots" class="nav-link" data-scroll-target="#boxplots"><span class="header-section-number">7.1</span> <strong>Boxplots</strong></a></li>
+  <li><a href="#average-per-subspecies" id="toc-average-per-subspecies" class="nav-link" data-scroll-target="#average-per-subspecies"><span class="header-section-number">7.2</span> <strong>Average per subspecies</strong></a></li>
+  </ul></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="notebook_mapping.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Mapping Porpoise Illumina Genomic Data</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Yacine Ben Chehida </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>This notebook presents a complete workflow for assessing the quality of Illumina whole-genome sequencing data generated for harbour porpoise and Dall’s porpoise populations. The objective is to evaluate the mapping quality of each sample, extract key quality control metrics, and visualise these statistics across individuals and populations.</p>
+<p>The workflow integrates three main components:</p>
+<ul>
+<li><p>Running&nbsp;<a href="http://qualimap.bioinfo.cipf.es/">Qualimap bamqc</a>, used to compute mapping quality metrics, coverage statistics, and alignment summaries for each BAM file.</p></li>
+<li><p>Automated extraction of QC metrics by parsing Qualimap reports and compiling the resulting values into structured text files.</p></li>
+<li><p>Visualisation in R of mapping quality metrics and coverage distribution across individuals and populations.</p></li>
+</ul>
+<p>Together, these steps provide a summary of mapping performance across the dataset used in <em>X et al.&nbsp;2026</em>. The resulting plots allow rapid identification of low-quality samples, comparison of sequencing depth across groups, and verification of mapping consistency prior to downstream genomic analyses.</p>
+</section>
+<section id="visualize-raw-sampling" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Visualize raw sampling</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">=</span> <span class="fu">read.table</span>(<span class="st">"untitled folder/species.txt"</span>, <span class="at">comment.char =</span> <span class="st">""</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dat) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"ID"</span>,<span class="st">"Species"</span>,<span class="st">"Couleur"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>dat</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["ID"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Species"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Couleur"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"2001","2":"HP-BLS","3":"#ff0000"},{"1":"3005","2":"HP-BLS","3":"#ff0000"},{"1":"3014","2":"HP-BLS","3":"#ff0000"},{"1":"3017","2":"HP-BLS","3":"#ff0000"},{"1":"3032","2":"HP-BLS","3":"#ff0000"},{"1":"U64","2":"HP-BLS","3":"#ff0000"},{"1":"U75","2":"HP-BLS","3":"#ff0000"},{"1":"U93","2":"HP-BLS","3":"#ff0000"},{"1":"RIM100","2":"HP-UP-MA","3":"#ff8600"},{"1":"RIM156","2":"HP-UP-MA","3":"#ff8600"},{"1":"RIM99","2":"HP-UP-MA","3":"#ff8600"},{"1":"No-2","2":"HP-UP-IB","3":"#d5ae33"},{"1":"No-5","2":"HP-UP-IB","3":"#d5ae33"},{"1":"PP118-2004","2":"HP-UP-IB","3":"#d5ae33"},{"1":"PP30-2002","2":"HP-UP-IB","3":"#d5ae33"},{"1":"PP79-2003","2":"HP-UP-IB","3":"#d5ae33"},{"1":"A2016-05647","2":"HP-NAT-KAT","3":"#0047AB"},{"1":"4993","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"4996","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"20773","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"21069","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"96-012","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"A2005-05129","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"A2019-05574","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"C2007-08047","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"C2012-00016","2":"HP-NAT-NOS","3":"#0047AB"},{"1":"1752","2":"HP-NAT-BES","3":"#778ad7"},{"1":"1927","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5013","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5023","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5058","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5067","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5071","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5077","2":"HP-NAT-BES","3":"#778ad7"},{"1":"5092","2":"HP-NAT-BES","3":"#778ad7"},{"1":"20565","2":"HP-NAT-BES","3":"#778ad7"},{"1":"21206","2":"HP-NAT-BES","3":"#778ad7"},{"1":"97-034","2":"HP-NAT-BES","3":"#778ad7"},{"1":"98-028","2":"HP-NAT-BES","3":"#778ad7"},{"1":"A1984-05062","2":"HP-NAT-BES","3":"#778ad7"},{"1":"A1986-05214","2":"HP-NAT-BES","3":"#778ad7"},{"1":"A2016-05698","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B41-14","2":"HP-NAT-BES","3":"#778ad7"},{"1":"A2020-05731","2":"HP-NAT-BES","3":"#778ad7"},{"1":"A2020-05733","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B22-15","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B23-15","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B34-13","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B43-15","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B50-14","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B58-15","2":"HP-NAT-BES","3":"#778ad7"},{"1":"B75-14","2":"HP-NAT-BES","3":"#778ad7"},{"1":"C1990-03105","2":"HP-NAT-BES","3":"#778ad7"},{"1":"C2009-04450","2":"HP-NAT-BES","3":"#778ad7"},{"1":"A1984-05087","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"A1986-05229","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"A1987-05226","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"A1993-05153","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"A1993-05175","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"A1997-05187","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"C1988-05707","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"C1989-05720","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"C2004-5008","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"C2004-5009","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"Pol-58","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"Pol-68","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"Pol-72","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"Pol-74","2":"HP-NAT-PBS","3":"#87CEEB"},{"1":"2016N054","2":"HP-NAT-BAS","3":"#6ac986"},{"1":"2017N009","2":"HP-NAT-BAS","3":"#6ac986"},{"1":"2017N012","2":"HP-NAT-BAS","3":"#6ac986"},{"1":"2017N013","2":"HP-NAT-BAS","3":"#6ac986"},{"1":"2017N036","2":"HP-NAT-BAS","3":"#6ac986"},{"1":"2000-24","2":"HP-NAT-BAS","3":"#6ac986"},{"1":"11-HPxxFA","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"19LN834","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"92-SV30F","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"NHV1-2019-29-11","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"NMA13-33-4F","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"IFR4","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"SV276","2":"HP-NAT-ICE","3":"#4ad3c0"},{"1":"Pp040801","2":"HP-NAT-CAN","3":"#5d7e38"},{"1":"Pp130701s","2":"HP-NAT-CAN","3":"#5d7e38"},{"1":"Pp160702","2":"HP-NAT-CAN","3":"#5d7e38"},{"1":"Pp180701","2":"HP-NAT-CAN","3":"#5d7e38"},{"1":"Pp2002-02s","2":"HP-NAT-CAN","3":"#5d7e38"},{"1":"3766","2":"HP-WPAC","3":"#4f2d7a"},{"1":"3767","2":"HP-WPAC","3":"#4f2d7a"},{"1":"3768","2":"HP-WPAC","3":"#4f2d7a"},{"1":"161","2":"HP-WPAC","3":"#4f2d7a"},{"1":"704","2":"HP-WPAC","3":"#4f2d7a"},{"1":"706","2":"HP-WPAC","3":"#4f2d7a"},{"1":"707","2":"HP-WPAC","3":"#4f2d7a"},{"1":"8514","2":"HP-WPAC","3":"#4f2d7a"},{"1":"1080","2":"HP-WPAC","3":"#5e36c6"},{"1":"1082","2":"HP-WPAC","3":"#5e36c6"},{"1":"1084","2":"HP-WPAC","3":"#5e36c6"},{"1":"5411","2":"HP-PAC-BERING","3":"#b053e9"},{"1":"26609","2":"HP-PAC-BERING","3":"#b053e9"},{"1":"4764","2":"HP-EPAC-RU","3":"#b053e9"},{"1":"145216","2":"DP","3":"#FAA0A0"},{"1":"145217","2":"DP","3":"#FAA0A0"},{"1":"145242","2":"DP","3":"#FAA0A0"},{"1":"145258","2":"DP","3":"#FAA0A0"},{"1":"145412","2":"DP","3":"#FAA0A0"},{"1":"145413","2":"DP","3":"#FAA0A0"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+</section>
+<section id="number-of-samples-per-population" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Number of samples per population</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df_counts <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">table</span>(dat[<span class="dv">2</span>]))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_counts</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["Species"],"name":[1],"type":["fct"],"align":["left"]},{"label":["Freq"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"DP","2":"6"},{"1":"HP-BLS","2":"8"},{"1":"HP-EPAC-RU","2":"1"},{"1":"HP-NAT-BAS","2":"6"},{"1":"HP-NAT-BES","2":"28"},{"1":"HP-NAT-CAN","2":"5"},{"1":"HP-NAT-ICE","2":"7"},{"1":"HP-NAT-KAT","2":"1"},{"1":"HP-NAT-NOS","2":"9"},{"1":"HP-NAT-PBS","2":"14"},{"1":"HP-PAC-BERING","2":"2"},{"1":"HP-UP-IB","2":"5"},{"1":"HP-UP-MA","2":"3"},{"1":"HP-WPAC","2":"11"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+</section>
+<section id="running-qualimap-on-mapped-bam-files" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Running Qualimap on mapped BAM files</h1>
+<p>This section shows the Slurm script used to run Qualimap&nbsp;<code>bamqc</code>&nbsp;on each BAM file. The command computes mapping quality metrics, alignment statistics, and coverage summaries that we will use in downstream visualization.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --time=25:00:00</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --nodes=1</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --ntasks=1</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --cpus-per-task=8</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mem=15G </span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --account=BIOL-SPECGEN-2018 </span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --job-name=map_sort_RG_dup_merge</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">##################################</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 - Load necessar softwares #</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">##################################</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ex">module</span> load bio/Qualimap/2.2.1-foss-2019b-R-3.6.2</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">###########################################                              </span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 2 - check mapping quality with qualimap #</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co">###########################################</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$path_results</span>/2_Qualimap/<span class="st">"</span><span class="va">$1</span><span class="st">"</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="ex">qualimap</span> bamqc <span class="at">--java-mem-size</span><span class="op">=</span>20G <span class="dt">\</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>-bam <span class="va">$path_results</span>/1_sorted_dedup_bam/<span class="va">$1</span>/<span class="st">"</span><span class="va">$1</span><span class="st">"</span>_sorted_dedup.bam <span class="dt">\</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>-c <span class="dt">\</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>-gd HUMAN <span class="dt">\</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>-nt 8 <span class="dt">\</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>-outdir <span class="va">$path_results</span>/2_Qualimap/<span class="st">"</span><span class="va">$1</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>-outformat HTML  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="extracting-useful-qualimap-qc-metrics" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> <strong>Extracting useful Qualimap QC Metrics</strong></h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Set working directory for collecting Qualimap summary files</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">WD</span><span class="op">=</span><span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026"</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026/qualimap"</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove previous output files to ensure a clean re-run</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../MapQ.txt</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Read_mapped.txt</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_read_mapped.txt</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Mean_Cov.txt</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../std_Cov.txt</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_1X.txt</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_3X.txt</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_5X.txt</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_10X.txt</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_15X.txt</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_20X.txt</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Pct_Proper_Pair.txt</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> ../Proper_Pair.txt</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop over all sample directories produced by Qualimap</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="pp">*</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">do</span> <span class="bu">cd</span> <span class="va">$i</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract mean mapping quality</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"mean mapping quality"</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $5}'</span><span class="va">)</span><span class="st">"\tMapQ"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/MapQ.txt</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract number of mapped reads</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"number of mapped reads"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/,//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $6}'</span><span class="va">)</span><span class="st">"\tRead_Mapped"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Read_mapped.txt</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract percent of mapped reads</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"number of mapped reads"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/,//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $7}'</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/\((\w+)(\.)(\w+)%\)/$1$2$3/g'</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/\(100%\)/100/g'</span><span class="va">)</span><span class="st">"\tPct_Read_Mapped"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_read_mapped.txt</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract properly paired read count</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"number of mapped paired reads (both in pair)"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/,//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $10}'</span><span class="va">)</span><span class="st">"\tProper_Pair"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Proper_Pair.txt</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Compute percent of reads in proper pairs</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/,//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'/number of mapped paired reads \(both in pair\)/{both=$10} /number of reads =/{total=$5} END{printf "%.2f", (both/total)*100}'</span><span class="va">)</span><span class="st">"\tPct_Proper_Pair"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_Proper_Pair.txt</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract mean coverage</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"mean coverageData"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/X//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tMean_Cov"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Mean_Cov.txt</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract std coverage</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"std coverageData"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/X//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tstd_Cov"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/std_Cov.txt</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract coverage thresholds</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"coverageData &gt;= 1X"</span>  <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/%//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tPct1X"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_1X.txt</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"coverageData &gt;= 3X"</span>  <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/%//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tPct3X"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_3X.txt</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"coverageData &gt;= 5X"</span>  <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/%//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tPct5X"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_5X.txt</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"coverageData &gt;= 10X"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/%//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tPct10X"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_10X.txt</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"coverageData &gt;= 15X"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/%//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tPct15X"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_15X.txt</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>      <span class="bu">echo</span> <span class="at">-e</span> <span class="va">$i</span><span class="st">"\t"</span><span class="va">$(</span><span class="fu">cat</span> genome_results.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"coverageData &gt;= 20X"</span> <span class="kw">|</span> <span class="fu">perl</span> <span class="at">-pe</span> <span class="st">'s/%//g'</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $4}'</span><span class="va">)</span><span class="st">"\tPct20X"</span> <span class="op">&gt;&gt;</span> <span class="va">$WD</span>/Pct_20X.txt</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>    <span class="bu">cd</span> ..</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="visualising-mapping-statistics-for-each-sample" class="level1 page-columns page-full" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Visualising Mapping Statistics for Each Sample</h1>
+<div class="cell page-columns page-full">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create scientific notation #</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>scientific_10 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ifelse</span>(x <span class="sc">&gt;</span> <span class="dv">1000</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>         <span class="fu">parse</span>(<span class="at">text =</span> <span class="fu">gsub</span>(<span class="st">"e</span><span class="sc">\\</span><span class="st">+*"</span>, <span class="st">" %*% 10^"</span>, scales<span class="sc">::</span><span class="fu">scientific_format</span>()(x))),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>         x)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="do">#########################</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Set working directory #</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="do">#########################</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="do">############################################</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Import and prepare the data for plotting #</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="do">############################################</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">system</span>(<span class="st">"cat *txt"</span>,<span class="at">intern =</span> <span class="cn">TRUE</span>)             <span class="co"># read all extracted metrics</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">strsplit</span>(data,<span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">do.call</span>(rbind,data)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">as.data.frame</span>(data)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(data) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Sample"</span>,<span class="st">"Value"</span>,<span class="st">"Statistics"</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Value <span class="ot">=</span> <span class="fu">as.numeric</span>(data<span class="sc">$</span>Value)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>species <span class="ot">=</span> <span class="fu">read.table</span>(<span class="st">"untitled folder/species.txt"</span>) <span class="co"># reference species table</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">=</span> <span class="st">"ToBeAdded"</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="do">###################################################</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign the good reference genome to each sample #</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="do">###################################################</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(species)[<span class="dv">1</span>]){</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]){</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (species[i,<span class="dv">1</span>] <span class="sc">==</span> data[j,<span class="dv">1</span>]) {</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>      data[j,<span class="dv">4</span>] <span class="ot">=</span> species[i,<span class="dv">2</span>]</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="do">###############################</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Set subspecies order (fixed) #</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="do">###############################</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>ssp_order <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="st">"HP-BLS"</span>, <span class="st">"HP-UP-MA"</span>, <span class="st">"HP-UP-IB"</span>, <span class="st">"HP-NAT-KAT"</span>, <span class="st">"HP-NAT-NOS"</span>,</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  <span class="st">"HP-NAT-BES"</span>, <span class="st">"HP-NAT-PBS"</span>, <span class="st">"HP-NAT-BAS"</span>, <span class="st">"HP-NAT-ICE"</span>, <span class="st">"HP-NAT-CAN"</span>,</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>  <span class="st">"HP-WPAC"</span>, <span class="st">"HP-PAC-BERING"</span>, <span class="st">"HP-EPAC-RU"</span>, <span class="st">"DP"</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">&lt;-</span> <span class="fu">as.character</span>(data<span class="sc">$</span>species)</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>species, <span class="at">levels =</span> ssp_order)</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="do">########################################</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Load species colours from metadata   #</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="do">########################################</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>color_ref <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">unique</span>(dat[,<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>)]))</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(color_ref) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"species"</span>,<span class="st">"color"</span>)</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>color_ref<span class="sc">$</span>species <span class="ot">=</span> <span class="fu">as.character</span>(color_ref<span class="sc">$</span>species)</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>col <span class="ot">=</span> <span class="st">"ToBeAdded"</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="do">###########################################</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign the color to use for each sample #</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="do">###########################################</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(color_ref)[<span class="dv">1</span>]){</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]){</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (color_ref[i,<span class="dv">1</span>] <span class="sc">==</span> data[j,<span class="dv">4</span>]) {</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>      data[j,<span class="dv">5</span>] <span class="ot">=</span> color_ref[i,<span class="dv">2</span>]</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>color_code <span class="ot">=</span> color_ref</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="do">###############################################</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="co"># Final polishing before generating the plots #</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="do">###############################################</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">with</span>(data, data[<span class="fu">order</span>(species),])   <span class="co"># reorder lines by species</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Sample <span class="ot">&lt;-</span> <span class="fu">factor</span>(                    <span class="co"># reorder samples</span></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>  data<span class="sc">$</span>Sample,</span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">rev</span>(<span class="fu">unique</span>(<span class="fu">with</span>(data, data[<span class="fu">order</span>(species),<span class="dv">1</span>])))</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Statistics <span class="ot">&lt;-</span> <span class="fu">factor</span>(                <span class="co"># enforce stats order</span></span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a>  data<span class="sc">$</span>Statistics,</span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"MapQ"</span>,<span class="st">"Read_Mapped"</span>,<span class="st">"Proper_Pair"</span>,<span class="st">"Pct_Read_Mapped"</span>,</span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Pct_Proper_Pair"</span>,<span class="st">"Mean_Cov"</span>,<span class="st">"std_Cov"</span>,</span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Pct1X"</span>,<span class="st">"Pct3X"</span>,<span class="st">"Pct5X"</span>,<span class="st">"Pct10X"</span>,<span class="st">"Pct15X"</span>,<span class="st">"Pct20X"</span>)</span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="co"># species palette            #</span></span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>pal_species <span class="ot">&lt;-</span> color_ref<span class="sc">$</span>color[<span class="fu">match</span>(<span class="fu">levels</span>(data<span class="sc">$</span>species), color_ref<span class="sc">$</span>species)]</span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a><span class="co"># y-axis sample colours      #</span></span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a>map_samp <span class="ot">&lt;-</span> <span class="fu">unique</span>(data[, <span class="fu">c</span>(<span class="st">"Sample"</span>,<span class="st">"col"</span>)])</span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a>map_samp<span class="sc">$</span>Sample <span class="ot">&lt;-</span> <span class="fu">factor</span>(map_samp<span class="sc">$</span>Sample, <span class="at">levels =</span> <span class="fu">levels</span>(data<span class="sc">$</span>Sample))</span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a>map_samp <span class="ot">&lt;-</span> map_samp[<span class="fu">order</span>(map_samp<span class="sc">$</span>Sample), ]</span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a>col_y <span class="ot">&lt;-</span> <span class="fu">as.character</span>(map_samp<span class="sc">$</span>col)</span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a>data_std <span class="ot">=</span> <span class="fu">subset</span>(data, data<span class="sc">$</span>Statistics <span class="sc">==</span> <span class="st">"std_Cov"</span>)</span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="do">#################</span></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="co"># Lollipop plot #</span></span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a><span class="do">#################</span></span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> data, <span class="fu">aes</span>(<span class="at">x =</span> Value, <span class="at">y =</span> Sample, <span class="at">color =</span> species)) <span class="sc">+</span> </span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_Publication</span>() <span class="sc">+</span> </span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> pal_species) <span class="sc">+</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">0</span>, <span class="at">xend =</span> Value, <span class="at">y =</span> Sample, <span class="at">yend =</span> Sample, <span class="at">color =</span> species),</span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a>               <span class="at">size =</span> <span class="fl">0.5</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(. <span class="sc">~</span> Statistics, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">colour =</span> col_y, <span class="at">face =</span> <span class="st">"bold"</span>)) <span class="sc">+</span></span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.major.y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"bisque1"</span>)) <span class="sc">+</span></span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">13</span>)) <span class="sc">+</span> </span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scientific_10)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full">
+<p class="page-columns page-full"><img src="notebook_mapping_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img column-screen" width="2880"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>A few conclusions:</p>
+<ul>
+<li><p>The mapping quality and the percentage of mapped reads are generally consistent across samples, with most individuals showing MQ &gt; 55 and &gt; 95 percent of reads mapped.</p></li>
+<li><p>As expected, sequencing depth varies substantially among samples. Coverage ranges from 3.6X to 54X, with a mean of 11.9X and a standard deviation of 7.9X (inflated by the higher depth samples from <em>Clemin et al.&nbsp;2023</em>).</p></li>
+<li><p>Two samples from <em>Clemin et al.&nbsp;2023</em> require further attention:</p>
+<ul>
+<li><p>A2016-05680: This individual belongs to HP-NAT-BES. Its mapping statistics raise concern: mapping quality is low (MQ = 33), mean coverage is only 3.9X, coverage variance is extremely high, and just 48 percent of the genome reaches at least 1X. These patterns suggest a technical issue during library preparation, sequencing, mapping, or possibly contamination. This sample should likely be excluded from downstream analyses.</p></li>
+<li><p>5013: This HP-NAT-BES sample. It has only 77 percent of the genome covered at 1X. Such incomplete coverage may introduce noise in downstream analyses. Given the large number of HP-NAT-BES individuals already available, this sample contributes little additional information, and excluding it would avoid potential artefacts without reducing population representation.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="mapping-statistics-across-subspecies" class="level1 page-columns page-full" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> <strong>Mapping statistics across subspecies</strong></h1>
+<section id="boxplots" class="level2 page-columns page-full" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="boxplots"><span class="header-section-number">7.1</span> <strong>Boxplots</strong></h2>
+<div class="cell page-columns page-full">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define species order</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">=</span> <span class="fu">factor</span>(data<span class="sc">$</span>species, <span class="at">levels =</span> ssp_order)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># define color palette </span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>couleur <span class="ot">=</span> pal_species</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># boxplot of mapping statistics per subspecies</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> data, <span class="fu">aes</span>(<span class="at">x =</span> species, <span class="at">y =</span> Value, <span class="at">color =</span> species)) <span class="sc">+</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_Publication</span>() <span class="sc">+</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_color_manual</span>(<span class="at">values =</span> couleur) <span class="sc">+</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="fu">facet_wrap</span>(Statistics <span class="sc">~</span> ., <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">ncol =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">colour =</span> <span class="st">"black"</span>),</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="at">strip.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">colour =</span> <span class="st">"black"</span>),</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"bisque1"</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>)) <span class="sc">+</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scientific_10) <span class="sc">+</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">"Subspecies"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full">
+<p class="page-columns page-full"><img src="notebook_mapping_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img column-screen" width="2880"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>=&gt; Most populations, except those in the North Pacific, have at least 50 percent of their genome covered at 5X.</p>
+</section>
+<section id="average-per-subspecies" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="average-per-subspecies"><span class="header-section-number">7.2</span> <strong>Average per subspecies</strong></h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute summary stats for mean coverage per subspecies</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>data[data<span class="sc">$</span>Statistics <span class="sc">==</span> <span class="st">"Mean_Cov"</span>, ] <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">group_by</span>(species) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">summarize</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">Mean =</span> <span class="fu">mean</span>(Value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">Sd   =</span> <span class="fu">sd</span>(Value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["species"],"name":[1],"type":["fct"],"align":["left"]},{"label":["Mean"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Sd"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"HP-BLS","2":"9.840275","3":"3.22187401"},{"1":"HP-UP-MA","2":"6.373267","3":"0.55480253"},{"1":"HP-UP-IB","2":"10.157080","3":"4.98938874"},{"1":"HP-NAT-KAT","2":"11.174400","3":"NA"},{"1":"HP-NAT-NOS","2":"17.717011","3":"9.52392775"},{"1":"HP-NAT-BES","2":"14.650796","3":"9.67004927"},{"1":"HP-NAT-PBS","2":"17.014207","3":"9.16001646"},{"1":"HP-NAT-BAS","2":"9.669983","3":"2.05412718"},{"1":"HP-NAT-ICE","2":"8.855600","3":"2.37628097"},{"1":"HP-NAT-CAN","2":"12.283980","3":"1.60570328"},{"1":"HP-WPAC","2":"5.142055","3":"1.21646331"},{"1":"HP-PAC-BERING","2":"4.078050","3":"0.02892067"},{"1":"HP-EPAC-RU","2":"5.753800","3":"NA"},{"1":"DP","2":"6.921700","3":"3.21999705"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<!-- -->
+
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb8" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Mapping Porpoise Illumina Genomic Data"</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Yacine Ben Chehida"</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">    theme: cosmo</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-location: left</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">    number-sections: true</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co">    smooth-scroll: true</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co">    df-print: paged</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co">  pdf:</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co">  echo: true</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co">  cash: true</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co">  warning: false</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co">  message: false</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="an">editor:</span><span class="co"> visual</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="fu"># Introduction</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>This notebook presents a complete workflow for assessing the quality of Illumina whole-genome sequencing data generated for harbour porpoise and Dall's porpoise populations. The objective is to evaluate the mapping quality of each sample, extract key quality control metrics, and visualise these statistics across individuals and populations.</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>The workflow integrates three main components:</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Running&nbsp;<span class="co">[</span><span class="ot">Qualimap bamqc</span><span class="co">](http://qualimap.bioinfo.cipf.es/)</span>, used to compute mapping quality metrics, coverage statistics, and alignment summaries for each BAM file.</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Automated extraction of QC metrics by parsing Qualimap reports and compiling the resulting values into structured text files.</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Visualisation in R of mapping quality metrics and coverage distribution across individuals and populations.</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>Together, these steps provide a summary of mapping performance across the dataset used in *X et al. 2026*. The resulting plots allow rapid identification of low-quality samples, comparison of sequencing depth across groups, and verification of mapping consistency prior to downstream genomic analyses.</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a><span class="co">#| include: false</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Import necessary libraries #</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(viridis)</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(cowplot)</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a><span class="co">#remotes::install_github("HanjoStudy/quotidieR")</span></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(quotidieR)</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"wesanderson"</span>)</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="co">#install.packages("ggthemes")</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"ggthemes"</span>)</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="co">#install.packages("plotly")</span></span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a><span class="fu"># Visualize raw sampling</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026"</span>)</span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">=</span> <span class="fu">read.table</span>(<span class="st">"untitled folder/species.txt"</span>, <span class="at">comment.char =</span> <span class="st">""</span>)</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dat) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"ID"</span>,<span class="st">"Species"</span>,<span class="st">"Couleur"</span>)</span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>dat</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a><span class="fu"># Number of samples per population</span></span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>df_counts <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">table</span>(dat[<span class="dv">2</span>]))</span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>df_counts</span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a><span class="fu"># Running Qualimap on mapped BAM files</span></span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a>This section shows the Slurm script used to run Qualimap&nbsp;<span class="in">`bamqc`</span>&nbsp;on each BAM file. The command computes mapping quality metrics, alignment statistics, and coverage summaries that we will use in downstream visualization.</span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, engine='bash', eval=FALSE}</span></span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --time=25:00:00</span></span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --nodes=1</span></span>
+<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --ntasks=1</span></span>
+<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --cpus-per-task=8</span></span>
+<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --mem=15G </span></span>
+<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --account=BIOL-SPECGEN-2018 </span></span>
+<span id="cb8-94"><a href="#cb8-94" aria-hidden="true" tabindex="-1"></a><span class="co">#SBATCH --job-name=map_sort_RG_dup_merge</span></span>
+<span id="cb8-95"><a href="#cb8-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-96"><a href="#cb8-96" aria-hidden="true" tabindex="-1"></a><span class="do">##################################</span></span>
+<span id="cb8-97"><a href="#cb8-97" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 - Load necessar softwares #</span></span>
+<span id="cb8-98"><a href="#cb8-98" aria-hidden="true" tabindex="-1"></a><span class="do">##################################</span></span>
+<span id="cb8-99"><a href="#cb8-99" aria-hidden="true" tabindex="-1"></a>module load bio<span class="sc">/</span>Qualimap<span class="sc">/</span><span class="dv">2</span>.<span class="fl">2.1</span><span class="sc">-</span>foss<span class="dv">-2019</span>b<span class="sc">-</span>R<span class="dv">-3</span>.<span class="fl">6.2</span></span>
+<span id="cb8-100"><a href="#cb8-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-101"><a href="#cb8-101" aria-hidden="true" tabindex="-1"></a><span class="do">###########################################                              </span></span>
+<span id="cb8-102"><a href="#cb8-102" aria-hidden="true" tabindex="-1"></a><span class="co"># 2 - check mapping quality with qualimap #</span></span>
+<span id="cb8-103"><a href="#cb8-103" aria-hidden="true" tabindex="-1"></a><span class="do">###########################################</span></span>
+<span id="cb8-104"><a href="#cb8-104" aria-hidden="true" tabindex="-1"></a>mkdir <span class="sc">-</span>p <span class="sc">$</span>path_results<span class="sc">/</span><span class="dv">2</span>_Qualimap<span class="sc">/</span><span class="st">"$1"</span></span>
+<span id="cb8-105"><a href="#cb8-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-106"><a href="#cb8-106" aria-hidden="true" tabindex="-1"></a>qualimap bamqc <span class="sc">--</span>java<span class="sc">-</span>mem<span class="sc">-</span>size<span class="ot">=</span><span class="dv">20</span>G \</span>
+<span id="cb8-107"><a href="#cb8-107" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span>bam <span class="sc">$</span>path_results<span class="sc">/</span><span class="dv">1</span>_sorted_dedup_bam<span class="sc">/</span><span class="er">$</span><span class="dv">1</span><span class="sc">/</span><span class="st">"$1"</span>_sorted_dedup.bam \</span>
+<span id="cb8-108"><a href="#cb8-108" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span>c \</span>
+<span id="cb8-109"><a href="#cb8-109" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span>gd HUMAN \</span>
+<span id="cb8-110"><a href="#cb8-110" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span>nt <span class="dv">8</span> \</span>
+<span id="cb8-111"><a href="#cb8-111" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span>outdir <span class="sc">$</span>path_results<span class="sc">/</span><span class="dv">2</span>_Qualimap<span class="sc">/</span><span class="st">"$1"</span> \</span>
+<span id="cb8-112"><a href="#cb8-112" aria-hidden="true" tabindex="-1"></a><span class="sc">-</span>outformat HTML  </span>
+<span id="cb8-113"><a href="#cb8-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-114"><a href="#cb8-114" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-115"><a href="#cb8-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-116"><a href="#cb8-116" aria-hidden="true" tabindex="-1"></a><span class="fu"># **Extracting useful Qualimap QC Metrics** </span></span>
+<span id="cb8-117"><a href="#cb8-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-118"><a href="#cb8-118" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, engine='bash'}</span></span>
+<span id="cb8-119"><a href="#cb8-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-120"><a href="#cb8-120" aria-hidden="true" tabindex="-1"></a><span class="co"># Set working directory for collecting Qualimap summary files</span></span>
+<span id="cb8-121"><a href="#cb8-121" aria-hidden="true" tabindex="-1"></a>WD<span class="ot">=</span><span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026"</span></span>
+<span id="cb8-122"><a href="#cb8-122" aria-hidden="true" tabindex="-1"></a>cd <span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026/qualimap"</span></span>
+<span id="cb8-123"><a href="#cb8-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-124"><a href="#cb8-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove previous output files to ensure a clean re-run</span></span>
+<span id="cb8-125"><a href="#cb8-125" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>MapQ.txt</span>
+<span id="cb8-126"><a href="#cb8-126" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Read_mapped.txt</span>
+<span id="cb8-127"><a href="#cb8-127" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_read_mapped.txt</span>
+<span id="cb8-128"><a href="#cb8-128" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Mean_Cov.txt</span>
+<span id="cb8-129"><a href="#cb8-129" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>std_Cov.txt</span>
+<span id="cb8-130"><a href="#cb8-130" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_1X.txt</span>
+<span id="cb8-131"><a href="#cb8-131" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_3X.txt</span>
+<span id="cb8-132"><a href="#cb8-132" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_5X.txt</span>
+<span id="cb8-133"><a href="#cb8-133" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_10X.txt</span>
+<span id="cb8-134"><a href="#cb8-134" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_15X.txt</span>
+<span id="cb8-135"><a href="#cb8-135" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_20X.txt</span>
+<span id="cb8-136"><a href="#cb8-136" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Pct_Proper_Pair.txt</span>
+<span id="cb8-137"><a href="#cb8-137" aria-hidden="true" tabindex="-1"></a>rm ..<span class="sc">/</span>Proper_Pair.txt</span>
+<span id="cb8-138"><a href="#cb8-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-139"><a href="#cb8-139" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop over all sample directories produced by Qualimap</span></span>
+<span id="cb8-140"><a href="#cb8-140" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="cf">in</span> <span class="sc">*</span></span>
+<span id="cb8-141"><a href="#cb8-141" aria-hidden="true" tabindex="-1"></a>  do cd <span class="sc">$</span>i</span>
+<span id="cb8-142"><a href="#cb8-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-143"><a href="#cb8-143" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract mean mapping quality</span></span>
+<span id="cb8-144"><a href="#cb8-144" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"mean mapping quality"</span> <span class="sc">|</span> awk <span class="st">'{print $5}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">MapQ"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>MapQ.txt</span>
+<span id="cb8-145"><a href="#cb8-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-146"><a href="#cb8-146" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract number of mapped reads</span></span>
+<span id="cb8-147"><a href="#cb8-147" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"number of mapped reads"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/,//g'</span> <span class="sc">|</span> awk <span class="st">'{print $6}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Read_Mapped"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Read_mapped.txt</span>
+<span id="cb8-148"><a href="#cb8-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-149"><a href="#cb8-149" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract percent of mapped reads</span></span>
+<span id="cb8-150"><a href="#cb8-150" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"number of mapped reads"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/,//g'</span> <span class="sc">|</span> awk <span class="st">'{print $7}'</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/\((\w+)(\.)(\w+)%\)/$1$2$3/g'</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/\(100%\)/100/g'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct_Read_Mapped"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_read_mapped.txt</span>
+<span id="cb8-151"><a href="#cb8-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-152"><a href="#cb8-152" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract properly paired read count</span></span>
+<span id="cb8-153"><a href="#cb8-153" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"number of mapped paired reads (both in pair)"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/,//g'</span> <span class="sc">|</span> awk <span class="st">'{print $10}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Proper_Pair"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Proper_Pair.txt</span>
+<span id="cb8-154"><a href="#cb8-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-155"><a href="#cb8-155" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Compute percent of reads in proper pairs</span></span>
+<span id="cb8-156"><a href="#cb8-156" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/,//g'</span> <span class="sc">|</span> awk <span class="st">'/number of mapped paired reads \(both in pair\)/{both=$10} /number of reads =/{total=$5} END{printf "%.2f", (both/total)*100}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct_Proper_Pair"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_Proper_Pair.txt</span>
+<span id="cb8-157"><a href="#cb8-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-158"><a href="#cb8-158" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract mean coverage</span></span>
+<span id="cb8-159"><a href="#cb8-159" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"mean coverageData"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/X//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Mean_Cov"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Mean_Cov.txt</span>
+<span id="cb8-160"><a href="#cb8-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-161"><a href="#cb8-161" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract std coverage</span></span>
+<span id="cb8-162"><a href="#cb8-162" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"std coverageData"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/X//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">std_Cov"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>std_Cov.txt</span>
+<span id="cb8-163"><a href="#cb8-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-164"><a href="#cb8-164" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Extract coverage thresholds</span></span>
+<span id="cb8-165"><a href="#cb8-165" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"coverageData &gt;= 1X"</span>  <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/%//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct1X"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_1X.txt</span>
+<span id="cb8-166"><a href="#cb8-166" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"coverageData &gt;= 3X"</span>  <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/%//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct3X"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_3X.txt</span>
+<span id="cb8-167"><a href="#cb8-167" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"coverageData &gt;= 5X"</span>  <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/%//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct5X"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_5X.txt</span>
+<span id="cb8-168"><a href="#cb8-168" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"coverageData &gt;= 10X"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/%//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct10X"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_10X.txt</span>
+<span id="cb8-169"><a href="#cb8-169" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"coverageData &gt;= 15X"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/%//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct15X"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_15X.txt</span>
+<span id="cb8-170"><a href="#cb8-170" aria-hidden="true" tabindex="-1"></a>      echo <span class="sc">-</span>e <span class="sc">$</span>i<span class="st">"</span><span class="sc">\t</span><span class="st">"</span><span class="sc">$</span>(cat genome_results.txt <span class="sc">|</span> grep <span class="st">"coverageData &gt;= 20X"</span> <span class="sc">|</span> perl <span class="sc">-</span>pe <span class="st">'s/%//g'</span> <span class="sc">|</span> awk <span class="st">'{print $4}'</span>)<span class="st">"</span><span class="sc">\t</span><span class="st">Pct20X"</span> <span class="sc">&gt;</span><span class="er">&gt;</span> <span class="er">$</span>WD<span class="sc">/</span>Pct_20X.txt</span>
+<span id="cb8-171"><a href="#cb8-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-172"><a href="#cb8-172" aria-hidden="true" tabindex="-1"></a>    cd ..</span>
+<span id="cb8-173"><a href="#cb8-173" aria-hidden="true" tabindex="-1"></a>done</span>
+<span id="cb8-174"><a href="#cb8-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-175"><a href="#cb8-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-176"><a href="#cb8-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-177"><a href="#cb8-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-178"><a href="#cb8-178" aria-hidden="true" tabindex="-1"></a><span class="fu"># Visualising Mapping Statistics for Each Sample</span></span>
+<span id="cb8-179"><a href="#cb8-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-182"><a href="#cb8-182" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-183"><a href="#cb8-183" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb8-184"><a href="#cb8-184" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb8-185"><a href="#cb8-185" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 22</span></span>
+<span id="cb8-186"><a href="#cb8-186" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 30</span></span>
+<span id="cb8-187"><a href="#cb8-187" aria-hidden="true" tabindex="-1"></a><span class="co">#| column: screen</span></span>
+<span id="cb8-188"><a href="#cb8-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-189"><a href="#cb8-189" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-190"><a href="#cb8-190" aria-hidden="true" tabindex="-1"></a><span class="co"># Create scientific notation #</span></span>
+<span id="cb8-191"><a href="#cb8-191" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-192"><a href="#cb8-192" aria-hidden="true" tabindex="-1"></a>scientific_10 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb8-193"><a href="#cb8-193" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ifelse</span>(x <span class="sc">&gt;</span> <span class="dv">1000</span>,</span>
+<span id="cb8-194"><a href="#cb8-194" aria-hidden="true" tabindex="-1"></a>         <span class="fu">parse</span>(<span class="at">text =</span> <span class="fu">gsub</span>(<span class="st">"e</span><span class="sc">\\</span><span class="st">+*"</span>, <span class="st">" %*% 10^"</span>, scales<span class="sc">::</span><span class="fu">scientific_format</span>()(x))),</span>
+<span id="cb8-195"><a href="#cb8-195" aria-hidden="true" tabindex="-1"></a>         x)</span>
+<span id="cb8-196"><a href="#cb8-196" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-197"><a href="#cb8-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-198"><a href="#cb8-198" aria-hidden="true" tabindex="-1"></a><span class="do">#########################</span></span>
+<span id="cb8-199"><a href="#cb8-199" aria-hidden="true" tabindex="-1"></a><span class="co"># Set working directory #</span></span>
+<span id="cb8-200"><a href="#cb8-200" aria-hidden="true" tabindex="-1"></a><span class="do">#########################</span></span>
+<span id="cb8-201"><a href="#cb8-201" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"/Users/yacinebenchehida/Desktop/porpoise_stuff/2025-2026"</span>)</span>
+<span id="cb8-202"><a href="#cb8-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-203"><a href="#cb8-203" aria-hidden="true" tabindex="-1"></a><span class="do">############################################</span></span>
+<span id="cb8-204"><a href="#cb8-204" aria-hidden="true" tabindex="-1"></a><span class="co"># Import and prepare the data for plotting #</span></span>
+<span id="cb8-205"><a href="#cb8-205" aria-hidden="true" tabindex="-1"></a><span class="do">############################################</span></span>
+<span id="cb8-206"><a href="#cb8-206" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">system</span>(<span class="st">"cat *txt"</span>,<span class="at">intern =</span> <span class="cn">TRUE</span>)             <span class="co"># read all extracted metrics</span></span>
+<span id="cb8-207"><a href="#cb8-207" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">strsplit</span>(data,<span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-208"><a href="#cb8-208" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">do.call</span>(rbind,data)</span>
+<span id="cb8-209"><a href="#cb8-209" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">as.data.frame</span>(data)</span>
+<span id="cb8-210"><a href="#cb8-210" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(data) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"Sample"</span>,<span class="st">"Value"</span>,<span class="st">"Statistics"</span>)</span>
+<span id="cb8-211"><a href="#cb8-211" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Value <span class="ot">=</span> <span class="fu">as.numeric</span>(data<span class="sc">$</span>Value)</span>
+<span id="cb8-212"><a href="#cb8-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-213"><a href="#cb8-213" aria-hidden="true" tabindex="-1"></a>species <span class="ot">=</span> <span class="fu">read.table</span>(<span class="st">"untitled folder/species.txt"</span>) <span class="co"># reference species table</span></span>
+<span id="cb8-214"><a href="#cb8-214" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">=</span> <span class="st">"ToBeAdded"</span></span>
+<span id="cb8-215"><a href="#cb8-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-216"><a href="#cb8-216" aria-hidden="true" tabindex="-1"></a><span class="do">###################################################</span></span>
+<span id="cb8-217"><a href="#cb8-217" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign the good reference genome to each sample #</span></span>
+<span id="cb8-218"><a href="#cb8-218" aria-hidden="true" tabindex="-1"></a><span class="do">###################################################</span></span>
+<span id="cb8-219"><a href="#cb8-219" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(species)[<span class="dv">1</span>]){</span>
+<span id="cb8-220"><a href="#cb8-220" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]){</span>
+<span id="cb8-221"><a href="#cb8-221" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (species[i,<span class="dv">1</span>] <span class="sc">==</span> data[j,<span class="dv">1</span>]) {</span>
+<span id="cb8-222"><a href="#cb8-222" aria-hidden="true" tabindex="-1"></a>      data[j,<span class="dv">4</span>] <span class="ot">=</span> species[i,<span class="dv">2</span>]</span>
+<span id="cb8-223"><a href="#cb8-223" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-224"><a href="#cb8-224" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-225"><a href="#cb8-225" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-226"><a href="#cb8-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-227"><a href="#cb8-227" aria-hidden="true" tabindex="-1"></a><span class="do">###############################</span></span>
+<span id="cb8-228"><a href="#cb8-228" aria-hidden="true" tabindex="-1"></a><span class="co"># Set subspecies order (fixed) #</span></span>
+<span id="cb8-229"><a href="#cb8-229" aria-hidden="true" tabindex="-1"></a><span class="do">###############################</span></span>
+<span id="cb8-230"><a href="#cb8-230" aria-hidden="true" tabindex="-1"></a>ssp_order <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb8-231"><a href="#cb8-231" aria-hidden="true" tabindex="-1"></a>  <span class="st">"HP-BLS"</span>, <span class="st">"HP-UP-MA"</span>, <span class="st">"HP-UP-IB"</span>, <span class="st">"HP-NAT-KAT"</span>, <span class="st">"HP-NAT-NOS"</span>,</span>
+<span id="cb8-232"><a href="#cb8-232" aria-hidden="true" tabindex="-1"></a>  <span class="st">"HP-NAT-BES"</span>, <span class="st">"HP-NAT-PBS"</span>, <span class="st">"HP-NAT-BAS"</span>, <span class="st">"HP-NAT-ICE"</span>, <span class="st">"HP-NAT-CAN"</span>,</span>
+<span id="cb8-233"><a href="#cb8-233" aria-hidden="true" tabindex="-1"></a>  <span class="st">"HP-WPAC"</span>, <span class="st">"HP-PAC-BERING"</span>, <span class="st">"HP-EPAC-RU"</span>, <span class="st">"DP"</span></span>
+<span id="cb8-234"><a href="#cb8-234" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-235"><a href="#cb8-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-236"><a href="#cb8-236" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">&lt;-</span> <span class="fu">as.character</span>(data<span class="sc">$</span>species)</span>
+<span id="cb8-237"><a href="#cb8-237" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>species, <span class="at">levels =</span> ssp_order)</span>
+<span id="cb8-238"><a href="#cb8-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-239"><a href="#cb8-239" aria-hidden="true" tabindex="-1"></a><span class="do">########################################</span></span>
+<span id="cb8-240"><a href="#cb8-240" aria-hidden="true" tabindex="-1"></a><span class="co"># Load species colours from metadata   #</span></span>
+<span id="cb8-241"><a href="#cb8-241" aria-hidden="true" tabindex="-1"></a><span class="do">########################################</span></span>
+<span id="cb8-242"><a href="#cb8-242" aria-hidden="true" tabindex="-1"></a>color_ref <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">unique</span>(dat[,<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>)]))</span>
+<span id="cb8-243"><a href="#cb8-243" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(color_ref) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"species"</span>,<span class="st">"color"</span>)</span>
+<span id="cb8-244"><a href="#cb8-244" aria-hidden="true" tabindex="-1"></a>color_ref<span class="sc">$</span>species <span class="ot">=</span> <span class="fu">as.character</span>(color_ref<span class="sc">$</span>species)</span>
+<span id="cb8-245"><a href="#cb8-245" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>col <span class="ot">=</span> <span class="st">"ToBeAdded"</span></span>
+<span id="cb8-246"><a href="#cb8-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-247"><a href="#cb8-247" aria-hidden="true" tabindex="-1"></a><span class="do">###########################################</span></span>
+<span id="cb8-248"><a href="#cb8-248" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign the color to use for each sample #</span></span>
+<span id="cb8-249"><a href="#cb8-249" aria-hidden="true" tabindex="-1"></a><span class="do">###########################################</span></span>
+<span id="cb8-250"><a href="#cb8-250" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(color_ref)[<span class="dv">1</span>]){</span>
+<span id="cb8-251"><a href="#cb8-251" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]){</span>
+<span id="cb8-252"><a href="#cb8-252" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (color_ref[i,<span class="dv">1</span>] <span class="sc">==</span> data[j,<span class="dv">4</span>]) {</span>
+<span id="cb8-253"><a href="#cb8-253" aria-hidden="true" tabindex="-1"></a>      data[j,<span class="dv">5</span>] <span class="ot">=</span> color_ref[i,<span class="dv">2</span>]</span>
+<span id="cb8-254"><a href="#cb8-254" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-255"><a href="#cb8-255" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-256"><a href="#cb8-256" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-257"><a href="#cb8-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-258"><a href="#cb8-258" aria-hidden="true" tabindex="-1"></a>color_code <span class="ot">=</span> color_ref</span>
+<span id="cb8-259"><a href="#cb8-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-260"><a href="#cb8-260" aria-hidden="true" tabindex="-1"></a><span class="do">###############################################</span></span>
+<span id="cb8-261"><a href="#cb8-261" aria-hidden="true" tabindex="-1"></a><span class="co"># Final polishing before generating the plots #</span></span>
+<span id="cb8-262"><a href="#cb8-262" aria-hidden="true" tabindex="-1"></a><span class="do">###############################################</span></span>
+<span id="cb8-263"><a href="#cb8-263" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">with</span>(data, data[<span class="fu">order</span>(species),])   <span class="co"># reorder lines by species</span></span>
+<span id="cb8-264"><a href="#cb8-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-265"><a href="#cb8-265" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Sample <span class="ot">&lt;-</span> <span class="fu">factor</span>(                    <span class="co"># reorder samples</span></span>
+<span id="cb8-266"><a href="#cb8-266" aria-hidden="true" tabindex="-1"></a>  data<span class="sc">$</span>Sample,</span>
+<span id="cb8-267"><a href="#cb8-267" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">rev</span>(<span class="fu">unique</span>(<span class="fu">with</span>(data, data[<span class="fu">order</span>(species),<span class="dv">1</span>])))</span>
+<span id="cb8-268"><a href="#cb8-268" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-269"><a href="#cb8-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-270"><a href="#cb8-270" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Statistics <span class="ot">&lt;-</span> <span class="fu">factor</span>(                <span class="co"># enforce stats order</span></span>
+<span id="cb8-271"><a href="#cb8-271" aria-hidden="true" tabindex="-1"></a>  data<span class="sc">$</span>Statistics,</span>
+<span id="cb8-272"><a href="#cb8-272" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"MapQ"</span>,<span class="st">"Read_Mapped"</span>,<span class="st">"Proper_Pair"</span>,<span class="st">"Pct_Read_Mapped"</span>,</span>
+<span id="cb8-273"><a href="#cb8-273" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Pct_Proper_Pair"</span>,<span class="st">"Mean_Cov"</span>,<span class="st">"std_Cov"</span>,</span>
+<span id="cb8-274"><a href="#cb8-274" aria-hidden="true" tabindex="-1"></a>             <span class="st">"Pct1X"</span>,<span class="st">"Pct3X"</span>,<span class="st">"Pct5X"</span>,<span class="st">"Pct10X"</span>,<span class="st">"Pct15X"</span>,<span class="st">"Pct20X"</span>)</span>
+<span id="cb8-275"><a href="#cb8-275" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-276"><a href="#cb8-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-277"><a href="#cb8-277" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-278"><a href="#cb8-278" aria-hidden="true" tabindex="-1"></a><span class="co"># species palette            #</span></span>
+<span id="cb8-279"><a href="#cb8-279" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-280"><a href="#cb8-280" aria-hidden="true" tabindex="-1"></a>pal_species <span class="ot">&lt;-</span> color_ref<span class="sc">$</span>color[<span class="fu">match</span>(<span class="fu">levels</span>(data<span class="sc">$</span>species), color_ref<span class="sc">$</span>species)]</span>
+<span id="cb8-281"><a href="#cb8-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-282"><a href="#cb8-282" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-283"><a href="#cb8-283" aria-hidden="true" tabindex="-1"></a><span class="co"># y-axis sample colours      #</span></span>
+<span id="cb8-284"><a href="#cb8-284" aria-hidden="true" tabindex="-1"></a><span class="do">##############################</span></span>
+<span id="cb8-285"><a href="#cb8-285" aria-hidden="true" tabindex="-1"></a>map_samp <span class="ot">&lt;-</span> <span class="fu">unique</span>(data[, <span class="fu">c</span>(<span class="st">"Sample"</span>,<span class="st">"col"</span>)])</span>
+<span id="cb8-286"><a href="#cb8-286" aria-hidden="true" tabindex="-1"></a>map_samp<span class="sc">$</span>Sample <span class="ot">&lt;-</span> <span class="fu">factor</span>(map_samp<span class="sc">$</span>Sample, <span class="at">levels =</span> <span class="fu">levels</span>(data<span class="sc">$</span>Sample))</span>
+<span id="cb8-287"><a href="#cb8-287" aria-hidden="true" tabindex="-1"></a>map_samp <span class="ot">&lt;-</span> map_samp[<span class="fu">order</span>(map_samp<span class="sc">$</span>Sample), ]</span>
+<span id="cb8-288"><a href="#cb8-288" aria-hidden="true" tabindex="-1"></a>col_y <span class="ot">&lt;-</span> <span class="fu">as.character</span>(map_samp<span class="sc">$</span>col)</span>
+<span id="cb8-289"><a href="#cb8-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-290"><a href="#cb8-290" aria-hidden="true" tabindex="-1"></a>data_std <span class="ot">=</span> <span class="fu">subset</span>(data, data<span class="sc">$</span>Statistics <span class="sc">==</span> <span class="st">"std_Cov"</span>)</span>
+<span id="cb8-291"><a href="#cb8-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-292"><a href="#cb8-292" aria-hidden="true" tabindex="-1"></a><span class="do">#################</span></span>
+<span id="cb8-293"><a href="#cb8-293" aria-hidden="true" tabindex="-1"></a><span class="co"># Lollipop plot #</span></span>
+<span id="cb8-294"><a href="#cb8-294" aria-hidden="true" tabindex="-1"></a><span class="do">#################</span></span>
+<span id="cb8-295"><a href="#cb8-295" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> data, <span class="fu">aes</span>(<span class="at">x =</span> Value, <span class="at">y =</span> Sample, <span class="at">color =</span> species)) <span class="sc">+</span> </span>
+<span id="cb8-296"><a href="#cb8-296" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_Publication</span>() <span class="sc">+</span> </span>
+<span id="cb8-297"><a href="#cb8-297" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb8-298"><a href="#cb8-298" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> pal_species) <span class="sc">+</span></span>
+<span id="cb8-299"><a href="#cb8-299" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">0</span>, <span class="at">xend =</span> Value, <span class="at">y =</span> Sample, <span class="at">yend =</span> Sample, <span class="at">color =</span> species),</span>
+<span id="cb8-300"><a href="#cb8-300" aria-hidden="true" tabindex="-1"></a>               <span class="at">size =</span> <span class="fl">0.5</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb8-301"><a href="#cb8-301" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(. <span class="sc">~</span> Statistics, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
+<span id="cb8-302"><a href="#cb8-302" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">colour =</span> col_y, <span class="at">face =</span> <span class="st">"bold"</span>)) <span class="sc">+</span></span>
+<span id="cb8-303"><a href="#cb8-303" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb8-304"><a href="#cb8-304" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.major.y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb8-305"><a href="#cb8-305" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb8-306"><a href="#cb8-306" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"bisque1"</span>)) <span class="sc">+</span></span>
+<span id="cb8-307"><a href="#cb8-307" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">13</span>)) <span class="sc">+</span> </span>
+<span id="cb8-308"><a href="#cb8-308" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> scientific_10)</span>
+<span id="cb8-309"><a href="#cb8-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-310"><a href="#cb8-310" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-311"><a href="#cb8-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-312"><a href="#cb8-312" aria-hidden="true" tabindex="-1"></a>A few conclusions:</span>
+<span id="cb8-313"><a href="#cb8-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-314"><a href="#cb8-314" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>The mapping quality and the percentage of mapped reads are generally consistent across samples, with most individuals showing MQ <span class="sc">\&gt;</span> 55 and <span class="sc">\&gt;</span> 95 percent of reads mapped.</span>
+<span id="cb8-315"><a href="#cb8-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-316"><a href="#cb8-316" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>As expected, sequencing depth varies substantially among samples. Coverage ranges from 3.6X to 54X, with a mean of 11.9X and a standard deviation of 7.9X (inflated by the higher depth samples from *Clemin et al. 2023*).</span>
+<span id="cb8-317"><a href="#cb8-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-318"><a href="#cb8-318" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Two samples from *Clemin et al. 2023* require further attention:</span>
+<span id="cb8-319"><a href="#cb8-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-320"><a href="#cb8-320" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>A2016-05680: This individual belongs to HP-NAT-BES. Its mapping statistics raise concern: mapping quality is low (MQ = 33), mean coverage is only 3.9X, coverage variance is extremely high, and just 48 percent of the genome reaches at least 1X. These patterns suggest a technical issue during library preparation, sequencing, mapping, or possibly contamination. This sample should likely be excluded from downstream analyses.</span>
+<span id="cb8-321"><a href="#cb8-321" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-322"><a href="#cb8-322" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>5013: This HP-NAT-BES sample. It has only 77 percent of the genome covered at 1X. Such incomplete coverage may introduce noise in downstream analyses. Given the large number of HP-NAT-BES individuals already available, this sample contributes little additional information, and excluding it would avoid potential artefacts without reducing population representation.</span>
+<span id="cb8-323"><a href="#cb8-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-324"><a href="#cb8-324" aria-hidden="true" tabindex="-1"></a><span class="fu"># **Mapping statistics across subspecies** </span></span>
+<span id="cb8-325"><a href="#cb8-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-326"><a href="#cb8-326" aria-hidden="true" tabindex="-1"></a><span class="fu">## **Boxplots** </span></span>
+<span id="cb8-327"><a href="#cb8-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-330"><a href="#cb8-330" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-331"><a href="#cb8-331" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb8-332"><a href="#cb8-332" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb8-333"><a href="#cb8-333" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-height: 22</span></span>
+<span id="cb8-334"><a href="#cb8-334" aria-hidden="true" tabindex="-1"></a><span class="co">#| fig-width: 30</span></span>
+<span id="cb8-335"><a href="#cb8-335" aria-hidden="true" tabindex="-1"></a><span class="co">#| column: screen</span></span>
+<span id="cb8-336"><a href="#cb8-336" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-337"><a href="#cb8-337" aria-hidden="true" tabindex="-1"></a><span class="co"># define species order</span></span>
+<span id="cb8-338"><a href="#cb8-338" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>species <span class="ot">=</span> <span class="fu">factor</span>(data<span class="sc">$</span>species, <span class="at">levels =</span> ssp_order)</span>
+<span id="cb8-339"><a href="#cb8-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-340"><a href="#cb8-340" aria-hidden="true" tabindex="-1"></a><span class="co"># define color palette </span></span>
+<span id="cb8-341"><a href="#cb8-341" aria-hidden="true" tabindex="-1"></a>couleur <span class="ot">=</span> pal_species</span>
+<span id="cb8-342"><a href="#cb8-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-343"><a href="#cb8-343" aria-hidden="true" tabindex="-1"></a><span class="co"># boxplot of mapping statistics per subspecies</span></span>
+<span id="cb8-344"><a href="#cb8-344" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> data, <span class="fu">aes</span>(<span class="at">x =</span> species, <span class="at">y =</span> Value, <span class="at">color =</span> species)) <span class="sc">+</span></span>
+<span id="cb8-345"><a href="#cb8-345" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_Publication</span>() <span class="sc">+</span></span>
+<span id="cb8-346"><a href="#cb8-346" aria-hidden="true" tabindex="-1"></a><span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb8-347"><a href="#cb8-347" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_color_manual</span>(<span class="at">values =</span> couleur) <span class="sc">+</span></span>
+<span id="cb8-348"><a href="#cb8-348" aria-hidden="true" tabindex="-1"></a><span class="fu">facet_wrap</span>(Statistics <span class="sc">~</span> ., <span class="at">scales =</span> <span class="st">"free_y"</span>, <span class="at">ncol =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb8-349"><a href="#cb8-349" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb8-350"><a href="#cb8-350" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(</span>
+<span id="cb8-351"><a href="#cb8-351" aria-hidden="true" tabindex="-1"></a><span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">colour =</span> <span class="st">"black"</span>),</span>
+<span id="cb8-352"><a href="#cb8-352" aria-hidden="true" tabindex="-1"></a><span class="at">strip.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">colour =</span> <span class="st">"black"</span>),</span>
+<span id="cb8-353"><a href="#cb8-353" aria-hidden="true" tabindex="-1"></a><span class="at">axis.text.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb8-354"><a href="#cb8-354" aria-hidden="true" tabindex="-1"></a><span class="at">strip.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"bisque1"</span>)</span>
+<span id="cb8-355"><a href="#cb8-355" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb8-356"><a href="#cb8-356" aria-hidden="true" tabindex="-1"></a><span class="fu">theme</span>(<span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>)) <span class="sc">+</span></span>
+<span id="cb8-357"><a href="#cb8-357" aria-hidden="true" tabindex="-1"></a><span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scientific_10) <span class="sc">+</span></span>
+<span id="cb8-358"><a href="#cb8-358" aria-hidden="true" tabindex="-1"></a><span class="fu">xlab</span>(<span class="st">"Subspecies"</span>)</span>
+<span id="cb8-359"><a href="#cb8-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-360"><a href="#cb8-360" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-361"><a href="#cb8-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-362"><a href="#cb8-362" aria-hidden="true" tabindex="-1"></a>=<span class="sc">\&gt;</span> Most populations, except those in the North Pacific, have at least 50 percent of their genome covered at 5X.</span>
+<span id="cb8-363"><a href="#cb8-363" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-364"><a href="#cb8-364" aria-hidden="true" tabindex="-1"></a><span class="fu">## **Average per subspecies** </span></span>
+<span id="cb8-365"><a href="#cb8-365" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-368"><a href="#cb8-368" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb8-369"><a href="#cb8-369" aria-hidden="true" tabindex="-1"></a><span class="co"># compute summary stats for mean coverage per subspecies</span></span>
+<span id="cb8-370"><a href="#cb8-370" aria-hidden="true" tabindex="-1"></a>data[data<span class="sc">$</span>Statistics <span class="sc">==</span> <span class="st">"Mean_Cov"</span>, ] <span class="sc">%&gt;%</span></span>
+<span id="cb8-371"><a href="#cb8-371" aria-hidden="true" tabindex="-1"></a><span class="fu">group_by</span>(species) <span class="sc">%&gt;%</span></span>
+<span id="cb8-372"><a href="#cb8-372" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">summarize</span>(</span>
+<span id="cb8-373"><a href="#cb8-373" aria-hidden="true" tabindex="-1"></a><span class="at">Mean =</span> <span class="fu">mean</span>(Value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-374"><a href="#cb8-374" aria-hidden="true" tabindex="-1"></a><span class="at">Sd   =</span> <span class="fu">sd</span>(Value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-375"><a href="#cb8-375" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-376"><a href="#cb8-376" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-377"><a href="#cb8-377" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+</code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+<script src="notebook_mapping_files/libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
